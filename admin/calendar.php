@@ -1,5 +1,5 @@
 <?php
-// Start the session at the very beginning
+// Start the session
 session_start();
 
 include '../db.php';
@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Initialize session arrays for new event types and names
+// Initialize session variables for new event types and names
 if (!isset($_SESSION['new_event_types'])) {
     $_SESSION['new_event_types'] = [];
 }
@@ -18,7 +18,7 @@ if (!isset($_SESSION['new_event_names'])) {
     $_SESSION['new_event_names'] = [];
 }
 
-// Handle AJAX request for saving new event type
+// Handle saving new event type
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'save_event_type') {
     $newEventType = $_POST['event_type'];
     if (!in_array($newEventType, $_SESSION['new_event_types'])) {
@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     exit();
 }
 
-// Handle AJAX request for saving new event name
+// Handle saving new event name
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'save_event_name') {
     $newEventName = $_POST['event_name'];
     if (!in_array($newEventName, $_SESSION['new_event_names'])) {
@@ -49,7 +49,7 @@ $scheduled_events = $conn->query("
     LEFT JOIN badges b ON eb.badge_id = b.badge_id
 ");
 
-// Handle form submission for saving/updating events
+// Handle saving/updating events
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_event'])) {
     $event_type = $_POST['event_type'];
     $event_name = $_POST['event_name'];
@@ -99,7 +99,8 @@ if (isset($_GET['delete_event'])) {
     $conn->query("INSERT INTO notifications (type, message) VALUES 
         ('event', 'An event has been removed from the calendar!')");
 
-    header("Location: calendar.php");
+    // Redirect with success message
+    header("Location: calendar.php?delete_success=1");
     exit();
 }
 ?>
@@ -119,8 +120,6 @@ if (isset($_GET['delete_event'])) {
 <body>
 
     <?php include 'sidebar.php'; ?>
-
-    <!-- Include the header.php file -->
     <?php include 'header.php'; ?>
 
     <div class="main-content">
@@ -215,7 +214,7 @@ if (isset($_GET['delete_event'])) {
                 <td><?php echo $event['date']; ?></td>
                 <td><?php echo $event['time']; ?></td>
                 <td>
-                    <a href="calendar.php?delete_event=<?php echo $event['id']; ?>" class="btn btn-danger">Delete</a>
+                    <a href="calendar.php?delete_event=<?php echo $event['id']; ?>" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this event?')">Delete</a>
                 </td>
             </tr>
             <?php endwhile; ?>
@@ -259,10 +258,29 @@ if (isset($_GET['delete_event'])) {
             </div>
         </div>
 
+        <!-- Toast for Success Message -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div id="deleteToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header bg-success text-white">
+                    <strong class="me-auto">Success</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    Event deleted successfully!
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
     $(document).ready(function() {
+        // Show toast if event was deleted
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('delete_success')) {
+            const deleteToast = new bootstrap.Toast(document.getElementById('deleteToast'));
+            deleteToast.show();
+        }
+
         // Save new event type
         $('#saveEventType').click(function() {
             var newEventType = $('#newEventType').val();
@@ -272,9 +290,9 @@ if (isset($_GET['delete_event'])) {
                     type: 'POST',
                     data: { action: 'save_event_type', event_type: newEventType },
                     success: function(response) {
-                        $('#addEventTypeModal').modal('hide'); // Close the modal
-                        $('#newEventType').val(''); // Clear the input
-                        location.reload(); // Reload the page to reflect changes
+                        $('#addEventTypeModal').modal('hide');
+                        $('#newEventType').val('');
+                        location.reload();
                     },
                     error: function(xhr, status, error) {
                         console.error("Error saving event type: " + error);
@@ -292,9 +310,9 @@ if (isset($_GET['delete_event'])) {
                     type: 'POST',
                     data: { action: 'save_event_name', event_name: newEventName },
                     success: function(response) {
-                        $('#addEventNameModal').modal('hide'); // Close the modal
-                        $('#newEventName').val(''); // Clear the input
-                        location.reload(); // Reload the page to reflect changes
+                        $('#addEventNameModal').modal('hide');
+                        $('#newEventName').val('');
+                        location.reload();
                     },
                     error: function(xhr, status, error) {
                         console.error("Error saving event name: " + error);

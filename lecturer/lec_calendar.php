@@ -2,7 +2,7 @@
 session_start();
 include '../db.php';
 
-// Ensure user is logged in and has lecturer privileges
+// Check logged-in lecturer privileges
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'lecturer') {
     header("Location: ../index.php");
     exit();
@@ -10,14 +10,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'lecturer') {
 
 $user_id = $_SESSION['user_id'];
 
-// Fetch all events updated by admin
+// Fetch events updated by admin
 $events = $conn->query("
     SELECT e.*, b.badge_name 
     FROM events e
     LEFT JOIN badges b ON e.badge_id = b.badge_id
 ");
 
-// Prepare event data for FullCalendar
+// event data for FullCalendar
 $event_data = [];
 while ($event = $events->fetch_assoc()) {
     $event_data[] = [

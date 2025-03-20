@@ -24,7 +24,7 @@ $badges = $badges_result->fetch_all(MYSQLI_ASSOC);
 $courses_result = $conn->query("SELECT course_id, course_name FROM courses");
 $courses = $courses_result->fetch_all(MYSQLI_ASSOC);
 
-// Fetch class rooms from 'class_rooms' table
+// Fetch class-rooms from 'class_rooms' table
 $classrooms_result = $conn->query("SELECT class_id, name FROM class_rooms");
 $classrooms = $classrooms_result->fetch_all(MYSQLI_ASSOC);
 

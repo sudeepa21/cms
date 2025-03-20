@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Fetch pending resource requests with joined data
+// Fetch pending resource requests
 $requests = $conn->query("
     SELECT 
         rr.id, 
@@ -26,6 +26,11 @@ $requests = $conn->query("
     JOIN users u ON rr.user_id = u.user_id -- Join users table to get lecturer's name
     WHERE rr.status='pending'
 ");
+
+// Check for database errors
+if (!$requests) {
+    die("Database error: " . $conn->error);
+}
 ?>
 
 <!DOCTYPE html>
@@ -130,9 +135,9 @@ $requests = $conn->query("
 <div class="main-content">
     <h3 class="mt-4"><i class="fas fa-clipboard-check"></i> Approve Resource Requests</h3>
 
-    <!-- Display success message if any -->
+    <!-- Display success or error message if any -->
     <?php if (isset($_GET['message'])): ?>
-        <div class="alert alert-success">
+        <div class="alert alert-<?php echo (strpos($_GET['message'], 'successfully') !== false) ? 'success' : 'danger'; ?>">
             <?php echo htmlspecialchars($_GET['message']); ?>
         </div>
     <?php endif; ?>
@@ -153,9 +158,9 @@ $requests = $conn->query("
                     <a href="approve_request.php?id=<?php echo $request['id']; ?>" class="btn btn-approve">
                         <i class="fas fa-check"></i> Approve
                     </a>
-                    <a href="deny_request.php?id=<?php echo $request['id']; ?>" class="btn btn-deny">
+                    <button class="btn btn-deny" onclick="denyRequest(<?php echo $request['id']; ?>)">
                         <i class="fas fa-times"></i> Deny
-                    </a>
+                    </button>
                 </div>
             </div>
             <?php endwhile; ?>
@@ -164,6 +169,30 @@ $requests = $conn->query("
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+function denyRequest(requestId) {
+    if (confirm("Are you sure you want to deny this request?")) {
+        $.ajax({
+            url: 'reject_user.php', // Use reject_user.php for resource request denials
+            type: 'POST',
+            data: { request_id: requestId }, // Send the resource request ID
+            success: function(response) {
+                const result = JSON.parse(response);
+                if (result.status === "success") {
+                    alert(result.message);
+                    location.reload(); // Reload the page to reflect changes
+                } else {
+                    alert(result.message);
+                }
+            },
+            error: function() {
+                alert("An error occurred while processing your request.");
+            }
+        });
+    }
+}
+</script>
 
 </body>
 </html>

@@ -8,21 +8,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
     exit();
 }
 
-// Fetch the student's enrolled badge IDs
-$student_id = $_SESSION['user_id']; // Assuming user_id is the student's ID
-$enrolled_badges = $conn->query("SELECT badge_id FROM enrollments WHERE student_id = '$student_id'");
-
-// Create a list of badge IDs (including 0 for all students)
-$badge_ids = [0]; // Include badge_id = 0 for all students
-while ($row = $enrolled_badges->fetch_assoc()) {
-    $badge_ids[] = $row['badge_id'];
-}
-
-// Convert the list of badge IDs to a comma-separated string for the SQL query
-$badge_ids_str = implode(",", $badge_ids);
-
-// Fetch notifications relevant to the student's badges
-$notifications = $conn->query("SELECT * FROM notifications WHERE badge_id IN ($badge_ids_str) ORDER BY created_at DESC LIMIT 10");
+// Fetch notifications for the logged-in student
+$student_id = $_SESSION['user_id'];
+$notifications = $conn->query("SELECT * FROM notifications WHERE user_id = '$student_id' ORDER BY created_at DESC LIMIT 10");
 
 if ($notifications->num_rows > 0) {
     while ($notification = $notifications->fetch_assoc()) {
